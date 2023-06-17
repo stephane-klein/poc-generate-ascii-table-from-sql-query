@@ -44,7 +44,7 @@ CREATE FUNCTION utils.ascii_table3(
     _query TEXT
 ) RETURNS TEXT AS $$
 DECLARE
-    _foo TEXT[];
+    _foo TEXT;
 BEGIN
     EXECUTE (
         WITH columns AS (
@@ -62,9 +62,9 @@ BEGIN
         SELECT
             FORMAT(
                 $query$
-                SELECT ARRAY_AGG(c) FROM (
-                    SELECT %s FROM main.contacts
-                ) AS c
+                SELECT ARRAY(
+                    SELECT ROW(%s) FROM main.contacts LIMIT 1
+                )
                 $query$,
                 STRING_AGG(
                     FORMAT(
