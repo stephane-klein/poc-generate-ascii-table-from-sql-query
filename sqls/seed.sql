@@ -44,7 +44,7 @@ CREATE FUNCTION utils.ascii_table3(
     _query TEXT
 ) RETURNS TEXT AS $$
 DECLARE
-    _foo INTEGER[];
+    _foo TEXT[];
 BEGIN
     EXECUTE (
         WITH columns AS (
@@ -58,26 +58,25 @@ BEGIN
                         LIMIT 1
                     )
                 ) AS column
-        ),
-        column_lengths AS (
-            SELECT
-                FORMAT(
-                    'SELECT %s FROM main.contacts',
-                    STRING_AGG(
-                        FORMAT(
-                            'MAX(CHAR_LENGTH(%I::VARCHAR))',
-                            columns.column
-                        ),
-                        ', '
-                    )
-                )
-            FROM
-                columns
         )
         SELECT
-            ARRAY_AGG(column_lengths)
+            FORMAT(
+                $query$
+                SELECT ARRAY_AGG(c) FROM (
+                    SELECT %s FROM main.contacts
+                ) AS c
+                $query$,
+                STRING_AGG(
+                    FORMAT(
+                        'MAX(CHAR_LENGTH(%I::VARCHAR))',
+                        columns.column
+                    ),
+                    ', '
+                )
+            )
         FROM
-            column_lengths
+            columns
+        LIMIT 1
     ) INTO _foo;
     RAISE NOTICE 'cc = %', _foo;
     RETURN 'foobar';
